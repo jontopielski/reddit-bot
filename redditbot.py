@@ -11,18 +11,16 @@ answers = []
 iterations = 0
 
 # max iterations before script terminates
-max_iterations = 10
+max_iterations = 5
 
 # delay slot limited by reddit's max requests
 delay_slot = 2
 
-# runs until set to False by matching desired iterations
-running = True
-
 # url, content extracted from url, and desired subreddit
-mfa_url = 'http://www.reddit.com/r/malefashionadvice'
-content = r.get_content(mfa_url)
-subreddit_name = "malefashionadvice"
+subreddit_name = "seduction"
+url = 'http://www.reddit.com/r/'
+url += subreddit_name
+content = r.get_content(url)
 subreddit = r.get_subreddit(subreddit_name)
 
 # login preload
@@ -30,7 +28,7 @@ r.login("fashion_info_finder", "topielski")
 print('Logging in...')
 
 # primary function
-while (running):
+while (True):
 
 	# loop through all submissions
 	for submission in content:
@@ -48,7 +46,8 @@ while (running):
 			top_comment = ''
 
 			# loop through every comment, finding the top score
-			for comment in praw.helpers.flatten_tree(comments):
+			# checking praw.helpers.flatten_tree(comments) also checks replies
+			for comment in comments:
 				comment_text = comment.body.lower()
 				comment_score = comment.score
 				# find the top scoring comment
@@ -71,8 +70,11 @@ while (running):
 
 			# when met, stop the script and create the file
 			if (iterations == max_iterations):
-				running = False
 				break
+
+	# reached if max_iterations is met or no more content
+	break
+
 
 
 # store everything into a file
