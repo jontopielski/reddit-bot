@@ -3,20 +3,27 @@ import time
 
 # reddit wrapper usage and defined user_agent
 r = praw.Reddit(user_agent = "fashion_info_finder bot v1.0 by /u/fashion_info_finder")
-# make 5 requests per call
-retrieve_limit = 25
+
 # holds the questions and answers in a list
 questions_id_cache = []
 questions = []
 answers = []
+iterations = 0
 
-# for running once and exiting
+# max iterations before script terminates
+max_iterations = 10
+
+# delay slot limited by reddit's max requests
+delay_slot = 2
+
+# runs until set to False by matching desired iterations
 running = True
 
 # url, content extracted from url, and desired subreddit
 mfa_url = 'http://www.reddit.com/r/malefashionadvice'
-content = r.get_content(mfa_url, limit = retrieve_limit)
-subreddit = r.get_subreddit("malefashionadvice")
+content = r.get_content(mfa_url)
+subreddit_name = "malefashionadvice"
+subreddit = r.get_subreddit(subreddit_name)
 
 # login preload
 r.login("fashion_info_finder", "topielski")
@@ -31,7 +38,7 @@ while (running):
 		# if it is a question, store the title and score
 		if '?' in submission.title and submission.id not in questions_id_cache:
 			print '\nQuestion: ', submission.title
-			print '\nScore: ', submission.score
+			print 'Score: ', submission.score
 			questions_id_cache.append(submission.id)
 			questions.append(submission.title)
 
@@ -41,20 +48,44 @@ while (running):
 			top_comment = ''
 
 			# loop through every comment, finding the top score
-			for comment in comments:
+			for comment in praw.helpers.flatten_tree(comments):
 				comment_text = comment.body.lower()
 				comment_score = comment.score
+				# find the top scoring comment
 				if (comment_score > top_score):
 					top_comment = comment_text
 					top_score = comment.score
-					
+
+			# append the top comment to the answers list
 			answers.append(top_comment)
+			iterations += 1
 
+			# print the status
 			print '\n================================='
+			print 'Sleeping for 2 seconds...'
+			print 'Total iterations: ', iterations
+			print '================================='
 
-	running = False
+			# delay slot needed to limit requests
+			time.sleep(delay_slot)
 
-	for counter in range(0, len(questions)):
-		print 'Question ', counter+1, ': ', questions[counter], '\n'
-		print 'Answer ', counter+1, ': ', answers[counter], '\n'
-		print '\n================================='
+			# when met, stop the script and create the file
+			if (iterations == max_iterations):
+				running = False
+				break
+
+
+# store everything into a file
+file = open('qa.txt', 'w')
+
+# header to the file
+file.write('=================================' + '\n')
+file.write('Q&A for ' + subreddit_name + '\n')
+file.write('=================================' + '\n\n')
+
+# loop through all the elements of the lists
+for counter in range(0, len(questions)):
+	the_count = str(counter+1)
+	file.write('Question ' + the_count + ': ' + questions[counter].encode('utf-8') + '\n\n')
+	file.write('Answer ' + the_count + ': ' + answers[counter].encode('utf-8') + '\n')
+	file.write('\n=================================\n\n')
