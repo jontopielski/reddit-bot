@@ -17,7 +17,7 @@ max_iterations = 5
 delay_slot = 2
 
 # url, content extracted from url, and desired subreddit
-subreddit_name = "seduction"
+subreddit_name = "programming"
 url = 'http://www.reddit.com/r/'
 url += subreddit_name
 content = r.get_content(url)
